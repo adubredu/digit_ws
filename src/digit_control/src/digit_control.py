@@ -11,6 +11,7 @@ class BasicClient(WebSocketClient):
     def opened(self):
         self.operation_mode = None
         self.responded = True
+        # self.arm_pose = None
 
         privilege_request = ['request-privilege', 
                                 {'privilege' : 'change-action-command',
@@ -48,54 +49,97 @@ class BasicClient(WebSocketClient):
             elif message_dict['status'] == 'success':
                 # print('Command finished successfully executing. ', str(message_dict['info']))
                 self.completed = True
+        elif message_type == 'object-kinematics':  
+            self.arm_pose = message_dict['transform']['rpyxyz'] 
+
 
 
 class Digit_Control:
-	def __init__(self, client):
-		self.client = client 
-		self.x_offset = 0.06
-		self.z_offset = -0.16
-		self.none = 999
-		self.vertical_confs = [150, 150]
-		self.armname = {'right':'right-hand', 'left':'left-hand'}
-		self.arm_id = {'right':0, 'left':1}
+    def __init__(self, client):
+        self.client = client 
+        self.x_offset = 0.06
+        self.z_offset = 0.16
+        self.none = 999
+        self.vertical_confs = [150, 150]
+        self.armname = {'right':'right-hand', 'left':'left-hand'}
+        self.arm_id = {'right':0, 'left':1}
 
-		rospy.init_node("digit_control")
+        rospy.init_node("digit_control")
 
-	def send_wrist_msg(self, pose, armname):
-		arm = self.armname[armname]
-		msg = ["action-end-effector-move",
-	      {
-	        "end-effector": arm,
-	        "waypoints": [
-	                      {"rpyxyz":[-0.0136,0.8128,0.1109,pose[0], pose[1], pose[2]]},
-	                      {"rpyxyz":[-0.0136,0.8128,0.1109,pose[0], pose[1], pose[2]]}],
-	        "reference-frame": {
-	          "robot-frame": "base"
-	        },
-	        "stall-threshold": None,
-	        "cyclic": False,
-	        "max-speed": 0.5,
-	        "duration": 2.5,
-	        "transition-duration": None
-	      }, 0]
-	      self.client.send(json.dumps(msg))
+    def send_wrist_msg(self, pose, dur, armname):
+        arm = self.armname[armname]
+        msg = ["action-end-effector-move",
+          {
+            "end-effector": arm,
+            "waypoints": [
+                          {"rpyxyz":[0.3,0.8128,0.1109,pose[0], pose[1], pose[2]]},
+                          {"rpyxyz":[0.3,0.8128,0.1109,pose[0], pose[1], pose[2]]}],
+            "reference-frame": {
+              "robot-frame": "base"
+            },
+            "stall-threshold": None,
+            "cyclic": False,
+            "max-speed": 0.5,
+            "duration": dur,
+            "transition-duration": None
+          }, 0]
 
-	def move_ee_to_pose(self, pose, armname):
-		#compute relative pose of stub
-		#offset from gripper: z=-16cm, x=6cm
-		wrist_x = pose[0] - self.x_offset
-		wrist_y = pose[1]
-		wrist_z = pose[2] - self.z_offset
-		self.send_wrist_msg([wrist_x, wrist_y, wrist_z],armname)
-		confs = self.compute_gripper_confs(pose)
-		self.move_gripper_to_conf(confs, armname) 
+          # ["action-end-effector-move",
+          # {
+          #   "end-effector": "right-hand",
+          #   "waypoints": [
+          #                 {"rpyxyz":[-0.3,0.8128,0.1109,0.45, -0.25, 0.15]},
+          #                 {"rpyxyz":[-0.3,0.8128,0.1109,0.45, -0.25, 0.15]}],
+          #   "reference-frame": {
+          #     "robot-frame": "base"
+          #   },
+          #   "stall-threshold": null,
+          #   "cyclic": false,
+          #   "max-speed": 0.5,
+          #   "duration": 2.5,
+          #   "transition-duration": null
+          # }, 0]
+        self.client.send(json.dumps(msg))
 
-	def compute_gripper_confs(self, pose):
-		pass
 
-	def move_gripper_to_conf(self, confs, armname):
-		try:
+    def get_wrist_pose(self, armname):
+        arm = self.armname[armname]
+        msg = [
+              "get-object-kinematics",
+              {
+                "object": {"robot-frame":arm},
+                "relative-to": {
+                  "robot-frame":"base"
+                },
+                "in-coordinates-of": {}
+              }
+            ]
+        self.client.send(json.dumps(msg))
+        time.sleep(0.05)
+        pose = self.client.arm_pose
+        print(pose)
+        return pose
+
+
+    def move_ee_to_pose(self, pose, armname, dur):
+        #compute relative pose of stub
+        #offset from gripper: z=-16cm, x=6cm
+        wrist_x = pose[0]# - self.x_offset
+        wrist_y = pose[1]
+        wrist_z = pose[2] #+ self.z_offset
+        self.send_wrist_msg([wrist_x, wrist_y, wrist_z],dur, armname) 
+        # time.sleep(10)
+        # arm_pose = self.get_wrist_pose(armname)
+        # confs = self.compute_gripper_confs(pose, arm_pose)
+        # self.move_gripper_to_conf(confs, armname) 
+
+
+    def compute_gripper_confs(self, pose):
+        pass
+
+
+    def move_gripper_to_conf(self, confs, armname):
+        try:
             channel = rospy.ServiceProxy("conf_channel", Conf)
             send_request = ConfRequest()
             arm = arm_id[armname]
@@ -114,11 +158,12 @@ class Digit_Control:
             print(e)
             sys.exit()
 
+
     def close_gripper(self, armname):
-    	try:
+        try:
             channel = rospy.ServiceProxy("conf_channel", Conf)
             send_request = ConfRequest()
-            arm = arm_id[armname]
+            arm = self.arm_id[armname]
             send_request.arm.data = arm
             send_request.conf.x = 1.0
             send_request.conf.y = self.none
@@ -126,19 +171,20 @@ class Digit_Control:
 
             response = channel(send_request)
             if response.status:
-               print("successfully sent conf ",values) 
+               print("successfully sent conf ") 
             else:
-                print("failed to send conf ",values)
+                print("failed to send conf ")
 
         except rospy.ServiceException as e:
             print(e)
             sys.exit()
 
+
     def open_gripper(self, armname):
-    	try:
+        try:
             channel = rospy.ServiceProxy("conf_channel", Conf)
             send_request = ConfRequest()
-            arm = arm_id[armname]
+            arm = self.arm_id[armname]
             send_request.arm.data = arm
             send_request.conf.x = 0.0
             send_request.conf.y = self.none
@@ -146,9 +192,9 @@ class Digit_Control:
 
             response = channel(send_request)
             if response.status:
-               print("successfully sent conf ",values) 
+               print("successfully sent conf ") 
             else:
-                print("failed to send conf ",values)
+                print("failed to send conf ")
 
         except rospy.ServiceException as e:
             print(e)
@@ -156,7 +202,8 @@ class Digit_Control:
 
 
 if __name__ == '__main__':
-	ws = BasicClient('ws://10.10.2.1:8080', protocols=['json-v1-agility'])
+    ws = BasicClient('ws://10.10.2.1:8080', protocols=['json-v1-agility'])
+    # ws = BasicClient('ws://127.0.0.1:8080', protocols=['json-v1-agility'])
     ws.daemon = False
 
     while True:
@@ -169,7 +216,39 @@ if __name__ == '__main__':
             print('WS connection NOT established')
             time.sleep(1)
 
-
-    pose = [0, 0, 0]
+# -0.0136,0.8128,0.1109,0.4,-0.25,0.15
+    
     dc = Digit_Control(ws)
-    dc.move_ee_to_pose(pose)
+    dt = 3
+
+    dc.open_gripper(armname='right')
+    time.sleep(dt)
+# '''
+    pose = [0.2,-0.25,0.15]
+    dc.move_ee_to_pose(pose, armname = 'right', dur=5)
+    time.sleep(dt)
+
+    pose = [0.4,-0.25,0.1]    
+    dc.move_ee_to_pose(pose, armname = 'right', dur=2.5)
+    time.sleep(dt)
+
+    pose = [0.4,-0.25,0.025]    
+    dc.move_ee_to_pose(pose, armname = 'right', dur=2.5)
+    time.sleep(dt)
+
+    dc.close_gripper(armname='right')
+    time.sleep(dt)
+
+    
+
+    pose = [0.4,-0.25,0.1]    
+    dc.move_ee_to_pose(pose, armname = 'right', dur=2.5)
+    time.sleep(dt)
+
+    pose = [0.2,-0.25,0.15] 
+    dc.move_ee_to_pose(pose, armname = 'right', dur=5)
+    time.sleep(dt)
+
+# '''
+
+    # print("Done")
