@@ -68,8 +68,9 @@ int delta=500;
           {
               if (angle==0)
               {
-                right_grabber.attach(13);
+                //right_grabber.attach(13);
                 right_grabber.writeMicroseconds(fully_open);
+                delay(100);
                 //while (right_grabber_pos < fully_open)
                 //{
                   
@@ -77,12 +78,13 @@ int delta=500;
                  // right_grabber.writeMicroseconds(right_grabber_pos);
                   //delay(50); //take 0.9 seconds to fully open
                 //}
-                right_grabber.detach();
+                //right_grabber.detach();
               } 
               else if (angle ==1)
               {
-                right_grabber.attach(13);
+                //right_grabber.attach(13);
                 right_grabber.writeMicroseconds(fully_close);
+                delay(100);
                 //while (right_grabber_pos > fully_close)
                 //{
                  // right_grabber_pos -= delta;
@@ -94,20 +96,22 @@ int delta=500;
           else {
             if (angle==0.0)
               {
-                left_grabber.attach(15);
+                //left_grabber.attach(15);
                 left_grabber.writeMicroseconds(left_fully_open);
+                delay(100);
                 //while (left_grabber_pos < left_fully_open)
                 //{
                  // left_grabber_pos += delta;
                   //left_grabber.writeMicroseconds(left_grabber_pos);
                   //delay(50); //take 1 seconds to fully open
                 //}
-                left_grabber.detach();
+                //left_grabber.detach();
               } 
               else if (angle ==1.0)
               {
-                left_grabber.attach(15);
+                //left_grabber.attach(15);
                 left_grabber.writeMicroseconds(left_fully_close);
+                delay(100);
                 //while (left_grabber_pos > left_fully_close)
                 //{
                  // left_grabber_pos -= delta;

@@ -82,23 +82,47 @@ class Digit_Control:
             "max-speed": 0.5,
             "duration": dur,
             "transition-duration": None
-          }, 0]
+          }, 0] 
+        self.client.send(json.dumps(msg))
 
-          # ["action-end-effector-move",
-          # {
-          #   "end-effector": "right-hand",
-          #   "waypoints": [
-          #                 {"rpyxyz":[-0.3,0.8128,0.1109,0.45, -0.25, 0.15]},
-          #                 {"rpyxyz":[-0.3,0.8128,0.1109,0.45, -0.25, 0.15]}],
-          #   "reference-frame": {
-          #     "robot-frame": "base"
-          #   },
-          #   "stall-threshold": null,
-          #   "cyclic": false,
-          #   "max-speed": 0.5,
-          #   "duration": 2.5,
-          #   "transition-duration": null
-          # }, 0]
+
+    def move_both_arms(self, lpose, rpose, dur):
+        msg = ["action-concurrent",
+                {
+                    "actions": [
+                        ["action-end-effector-move",
+                              {
+                                "end-effector": 'left-hand',
+                                "waypoints": [
+                                              {"rpyxyz":[0.3,0.8128,0.1109,lpose[0], lpose[1], lpose[2]]},
+                                              {"rpyxyz":[0.3,0.8128,0.1109,lpose[0], lpose[1], lpose[2]]}],
+                                "reference-frame": {
+                                  "robot-frame": "base"
+                                },
+                                "stall-threshold": None,
+                                "cyclic": False,
+                                "max-speed": 0.5,
+                                "duration": dur,
+                                "transition-duration": None
+                              }, 0],
+                        ["action-end-effector-move",
+                            {
+                                "end-effector": 'right-hand',
+                                "waypoints": [
+                                              {"rpyxyz":[0.3,0.8128,0.1109,rpose[0], rpose[1], rpose[2]]},
+                                              {"rpyxyz":[0.3,0.8128,0.1109,rpose[0], rpose[1], rpose[2]]}],
+                                "reference-frame": {
+                                  "robot-frame": "base"
+                                },
+                                "stall-threshold": None,
+                                "cyclic": False,
+                                "max-speed": 0.5,
+                                "duration": dur,
+                                "transition-duration": None
+                              }, 0]  
+                    ]
+                }
+        ]
         self.client.send(json.dumps(msg))
 
 
@@ -142,7 +166,7 @@ class Digit_Control:
         try:
             channel = rospy.ServiceProxy("conf_channel", Conf)
             send_request = ConfRequest()
-            arm = arm_id[armname]
+            arm = self.arm_id[armname]
             send_request.arm.data = arm
             send_request.conf.x = self.none
             send_request.conf.y = confs[0]
@@ -150,9 +174,9 @@ class Digit_Control:
 
             response = channel(send_request)
             if response.status:
-               print("successfully sent conf ",values) 
+               print("successfully sent conf ") 
             else:
-                print("failed to send conf ",values)
+                print("failed to send conf ")
 
         except rospy.ServiceException as e:
             print(e)
@@ -160,6 +184,7 @@ class Digit_Control:
 
 
     def close_gripper(self, armname):
+        # print('Gripper closed')
         try:
             channel = rospy.ServiceProxy("conf_channel", Conf)
             send_request = ConfRequest()
@@ -181,6 +206,7 @@ class Digit_Control:
 
 
     def open_gripper(self, armname):
+        # print("Gripper open")
         try:
             channel = rospy.ServiceProxy("conf_channel", Conf)
             send_request = ConfRequest()
@@ -202,8 +228,8 @@ class Digit_Control:
 
 
 if __name__ == '__main__':
-    ws = BasicClient('ws://10.10.2.1:8080', protocols=['json-v1-agility'])
-    # ws = BasicClient('ws://127.0.0.1:8080', protocols=['json-v1-agility'])
+    # ws = BasicClient('ws://10.10.2.1:8080', protocols=['json-v1-agility'])
+    ws = BasicClient('ws://127.0.0.1:8080', protocols=['json-v1-agility'])
     ws.daemon = False
 
     while True:
@@ -221,9 +247,16 @@ if __name__ == '__main__':
     dc = Digit_Control(ws)
     dt = 3
 
-    dc.open_gripper(armname='right')
+    
+
+    dc.close_gripper(armname='left')
     time.sleep(dt)
-# '''
+
+    dc.open_gripper(armname='left')
+    time.sleep(dt)
+
+    # dc.move_gripper_to_conf([150,150], armname='left')
+'''
     pose = [0.2,-0.25,0.15]
     dc.move_ee_to_pose(pose, armname = 'right', dur=5)
     time.sleep(dt)
@@ -249,6 +282,9 @@ if __name__ == '__main__':
     dc.move_ee_to_pose(pose, armname = 'right', dur=5)
     time.sleep(dt)
 
-# '''
+    dc.open_gripper(armname='right')
+    time.sleep(dt)
+
+'''
 
     # print("Done")

@@ -1,2 +1,5 @@
 build/
 devel/
+src/digit_perception/data/
+src/digit_perception/data2/
+src/digit_perception/perception_models/
