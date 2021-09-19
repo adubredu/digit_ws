@@ -1,9 +1,24 @@
 #include <Servo.h> 
 #include <Wire.h>
-#include <Servo.h>
+#include <DynamixelShield.h>
+
+#if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_MEGA2560)
+  #include <SoftwareSerial.h>
+  SoftwareSerial soft_serial(7, 8); // DYNAMIXELShield UART RX/TX
+  #define DEBUG_SERIAL soft_serial
+#elif defined(ARDUINO_SAM_DUE) || defined(ARDUINO_SAM_ZERO)
+  #define DEBUG_SERIAL SerialUSB    
+#else
+  #define DEBUG_SERIAL Serial
+#endif
+
 
 #define SLAVE_ADDRESS 0X04
 #define SPEED_REG 32
+const float DXL_PROTOCOL_VERSION = 1.0;
+
+DynamixelShield dxl;
+using namespace ControlTableItem;
 
 volatile boolean receiveFlag = false;
 char temp[32];
@@ -27,19 +42,41 @@ int left_fully_close = 1000;
 int delta=500;
 
 void setup() {
-  // put your setup code here, to run once:
+  dxl.begin(57600);
+  dxl.setPortProtocolVersion(DXL_PROTOCOL_VERSION);
+  dxl.ping(right_yawID);
+  dxl.ping(right_pitchID);
+  dxl.ping(left_yawID);
+  dxl.ping(left_pitchID);
+ 
+  dxl.torqueOff(right_yawID);
+  dxl.torqueOff(right_pitchID);
+  dxl.torqueOff(left_yawID);
+  dxl.torqueOff(left_pitchID);
+  
+  dxl.setOperatingMode(right_yawID, OP_POSITION);
+  dxl.setOperatingMode(right_pitchID, OP_POSITION);
+  dxl.setOperatingMode(left_yawID, OP_POSITION);
+  dxl.setOperatingMode(left_pitchID, OP_POSITION);
+  
+  dxl.torqueOn(right_yawID);
+  dxl.torqueOn(right_pitchID);
+  dxl.torqueOn(left_yawID);
+  dxl.torqueOn(left_pitchID);
+  
   Wire.begin(SLAVE_ADDRESS);
   Wire.onReceive(receiveEvent);
   right_grabber.attach(3);
-//  left_grabber.attach(15); 
-//  left_grabber.writeMicroseconds(left_fully_open);
-  right_grabber.writeMicroseconds(fully_open);
-  //set_servo_position_angle(left_yawID, 150);
+  left_grabber.attach(4); 
+  left_grabber.writeMicroseconds(left_fully_open);
+  right_grabber.writeMicroseconds(fully_open); 
   delay(2000);
    
   
 }
-void loop()
+
+ 
+ void loop()
  {
    
  if (receiveFlag == true) {
@@ -53,47 +90,63 @@ void loop()
           if (temp[0] == '0')
           {
               if (angle==0)
-              { 
+              {
                 right_grabber.writeMicroseconds(fully_open);
-                delay(100); 
+                delay(100);
               } 
               else if (angle ==1)
-              { 
+              {
                 right_grabber.writeMicroseconds(fully_close);
-                delay(100); 
+                delay(100);
               } 
-          } 
+          }
+          else {
+            if (angle==0.0)
+              {
+                left_grabber.writeMicroseconds(left_fully_open);
+                delay(100);
+              } 
+              else if (angle ==1.0)
+              {
+                left_grabber.writeMicroseconds(left_fully_close);
+                delay(100);
+              } 
+          }
       }
     }
+    else if (temp[1] == '2'){
+      String ang = temp;
+      char buffer[10];
+      ang.substring(2).toCharArray(buffer,10);
+      float angle = atof(buffer);
+      if (angle!=999)
+      {
+        if (temp[0]=='0')
+          dxl.setGoalPosition(right_yawID, angle, UNIT_DEGREE);
+        else
+          dxl.setGoalPosition(left_yawID, angle, UNIT_DEGREE);
+      }
+    }
+    else if (temp[1] == '3'){
+      String ang = temp;
+      char buffer[10];
+      ang.substring(2).toCharArray(buffer,10);
+      float angle = atof(buffer);
+      if (angle!=999)
+       {
+         if (temp[0]=='0')
+            dxl.setGoalPosition(right_pitchID, angle, UNIT_DEGREE);
+         else
+            dxl.setGoalPosition(left_pitchID, angle, UNIT_DEGREE);
+       }
+    }
+    
     receiveFlag = false;
   }
  }
  
  
- int degree_to_pwm(float degree)
- {
-   return (int)round(degree/unit_degree);
- }
- 
- 
- float pwm_to_degree(int pwm)
- {
-   return pwm*unit_degree;
- }
- 
- 
- void set_servo_position_angle(int servoID, float angle)
- {
-   int pwm = degree_to_pwm(angle);
-   //SetPosition(servoID, pwm);
- }
- 
- 
- float get_servo_position_angle(int servoID)
- {
-   //int pwm = GetPosition(servoID);
-   //return pwm_to_degree(pwm);
- }
+
  
  void receiveEvent(int howMany) {
 
