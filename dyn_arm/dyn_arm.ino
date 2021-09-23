@@ -42,7 +42,7 @@ int left_fully_close = 1000;
 int delta=500;
 
 void setup() {
-  dxl.begin(57600);
+  dxl.begin(1000000);
   dxl.setPortProtocolVersion(DXL_PROTOCOL_VERSION);
   dxl.ping(right_yawID);
   dxl.ping(right_pitchID);
@@ -63,15 +63,20 @@ void setup() {
   dxl.torqueOn(right_pitchID);
   dxl.torqueOn(left_yawID);
   dxl.torqueOn(left_pitchID);
+
+  dxl.writeControlTableItem(ControlTableItem::MOVING_SPEED, right_yawID, 100);
+  dxl.writeControlTableItem(ControlTableItem::MOVING_SPEED, right_pitchID, 100);
+  dxl.writeControlTableItem(ControlTableItem::MOVING_SPEED, left_yawID, 100);
+  dxl.writeControlTableItem(ControlTableItem::MOVING_SPEED, left_pitchID, 100);
   
   Wire.begin(SLAVE_ADDRESS);
   Wire.onReceive(receiveEvent);
   right_grabber.attach(3);
   left_grabber.attach(4); 
-  left_grabber.writeMicroseconds(left_fully_open);
-  right_grabber.writeMicroseconds(fully_open); 
+  left_grabber.writeMicroseconds(fully_open);
+  delay(3000);
+  left_grabber.writeMicroseconds(fully_close); 
   delay(2000);
-   
   
 }
 

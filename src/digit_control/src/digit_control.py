@@ -249,13 +249,13 @@ if __name__ == '__main__':
 
     
 
-    dc.close_gripper(armname='left')
-    time.sleep(dt)
+    # dc.close_gripper(armname='left')
+    # time.sleep(dt)
 
-    dc.open_gripper(armname='left')
-    time.sleep(dt)
+    # dc.open_gripper(armname='left')
+    # time.sleep(dt)
 
-    # dc.move_gripper_to_conf([150,150], armname='left')
+    dc.move_gripper_to_conf([100,150], armname='left')
 '''
     pose = [0.2,-0.25,0.15]
     dc.move_ee_to_pose(pose, armname = 'right', dur=5)

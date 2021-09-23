@@ -43,12 +43,14 @@ int delta=500;
   //left_grabber.write(fully_close);
   //left_grabber.writeMicroseconds(2000);
   //delay(2000);
-  //left_grabber.writeMicroseconds(1000);
-  left_grabber.writeMicroseconds(left_fully_open);
-  right_grabber.writeMicroseconds(fully_open);
-  //set_servo_position_angle(left_yawID, 150);
+  left_grabber.writeMicroseconds(fully_open);
   delay(2000);
-   
+  //right_grabber.writeMicroseconds(left_fully_close);
+  //delay(3000);
+  right_grabber.writeMicroseconds(fully_open);
+//  right_grabber.writeMicroseconds(fully_open);
+  //set_servo_position_angle(left_yawID, 150);
+  delay(2000); 
  
  }
  

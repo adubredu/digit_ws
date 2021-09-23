@@ -30,5 +30,7 @@ if __name__ == "__main__":
     dp = Digit_Perception()
     dm = Digit_Manipulation(dc)
     domain_path = '/home/alphonsus/research/digit/digit_ws/src/digit_planning/pddl/domain.pddl'
+    print('Starting')
     ls = Lesample(dm, dp, domain_path)
     ls.perform_lesample()
+    print('\nComplete')

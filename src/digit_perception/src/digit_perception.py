@@ -1,4 +1,4 @@
-import rospy, os, sys
+import rospy, os, sys, time
 from sensor_msgs.msg import Image
 import cv2, copy
 from cv_bridge import CvBridge, CvBridgeError
@@ -12,8 +12,8 @@ class Digit_Perception:
 		rospy.Subscriber('/forward_chest_realsense_d435/color/image_raw', Image, self.camera_callback)
 		self.camera_feed = None
 		self.obs = None
-		self.obj_list = ['banana', 'cube', 'sponge','lion']
-		self.model = core.Model.load('/home/alphonsus/research/digit/digit_ws/src/digit_perception/perception_models/grocery_detector_v2.pth', self.obj_list)
+		self.obj_list = ['banana', 'cube', 'sponge','lion', 'chlorox','tea']
+		self.model = core.Model.load('/home/alphonsus/research/digit/digit_ws/src/digit_perception/perception_models/detector_v3.pth', self.obj_list)
 		self.bridge = CvBridge()
 		self.data_ind = 1
 
@@ -148,9 +148,9 @@ class Digit_Perception:
 			if self.camera_feed is not None:  
 				belief = self.detect_objects()
 				camera_view = self.annotate_object_beliefs(belief)
-				cv2.imshow('Test',self.disp)
-				if cv2.waitKey(1) & 0xFF == ord('q'):
-				    break 
+				# cv2.imshow('Test',self.disp)
+				# if cv2.waitKey(1) & 0xFF == ord('q'):
+				#     break 
 				yield belief
 
 if __name__ == "__main__":

@@ -1,33 +1,54 @@
 import numpy as np
 from fd import Fast_Downward
-import os 
+import os, time
 
 class Planning_Utils:
     def __init__(self, dm, dp):
         self.dm = dm 
         self.dp = dp 
         self.holding = None
-        self.full_cpty = 3
+        self.full_cpty = 6
         self.masses = {"banana":"heavy", 
                        "lion":"light",
                        "sponge":"light",
-                       "cube":"heavy"}
-        sponge =  [0.4,-0.25,0.025]
-        lion =  [0.4, -0.35, 0.025]
-        banana1 =  [0.4,-0.2,0.022] 
-        cube =  [0.3,-0.25,0.018]
-        # pickpose5 =  [0.3,-0.2,0.016]
-        banana2 =  [0.3,-0.35,0.02]   
+                       "cube":"light",
+                       "chlorox":"heavy",
+                       "tea":"heavy"}
+        # sponge =  [0.5,-0.23,0.025, 150] 
+        # chlorox =  [0.45,-0.3,0.025, 135]
+        # tea =  [0.4,-0.19,0.022, 135] 
+        # monkey =  [0.31,-0.26,0.015, 170]
+        # banana =  [0.31,-0.22,0.014, 150] 
+        # lion =   [0.42,-0.26,0.022, 150]
 
-        self.obs = {"sponge":sponge, "lion":lion, "banana":banana1, 
-                     "cube":cube}
-        self.items = ["banana", "sponge", "cube", "lion","banana"]
+        # placepose1 = [0.45,0.13,0.05, 260]   
+        # placepose2 = [0.45,0.05,0.05,270]  
+        # placepose3 = [0.45,0.0,0.05,270] 
+        # placepose4 = [0.45,0.13,0.08, 260]   
+        # placepose5 = [0.45,0.05,0.08,270]  
+        # placepose6 = [0.45,0.0,0.08,270] 
 
-        placepose1 = [0.4,0.1,0.07]   
-        placepose2 = [0.4,0.05,0.07]  
-        placepose3 = [0.4,0.0,0.04]
+        sponge =  [0.5,-0.23,0.025, 150] 
+        chlorox =  [0.45,-0.3,0.025, 135]
+        tea =  [0.4,-0.16,0.022, 135] 
+        monkey =  [0.29,-0.26,0.015, 170]
+        banana =  [0.31,-0.21,0.014, 150] 
+        lion =   [0.42,-0.26,0.022, 150]
 
-        self.places = [placepose3, placepose2, placepose1]
+        placepose1 = [0.4,0.13,0.05, 260]   
+        placepose2 = [0.4,0.05,0.05,270]  
+        placepose3 = [0.4,0.0,0.05,270] 
+        placepose4 = [0.4,0.13,0.08, 260]   
+        placepose5 = [0.4,0.05,0.08,270]  
+        placepose6 = [0.4,0.0,0.08,270] 
+
+
+        self.obs = {"sponge":sponge, "lion":lion, "banana":banana, 
+                     "cube":monkey, "chlorox":chlorox, "tea":tea}
+        self.items = ["banana", "sponge", "cube", "lion","banana","chlorox", "tea"]
+
+
+        self.places = [placepose1, placepose2, placepose3, placepose4, placepose5, placepose6]
 
     def create_pddl_problem(self,inbox, topfree, mediumlist, heavylist):
         topfree = list(set(topfree)) 
@@ -188,21 +209,28 @@ class Planning_Utils:
         self.holding = name
         # print("Picking ",name)
         self.dm.pick_object(self.obs[name], "right")
+        time.sleep(5)
 
     def pick_from_bag(self, name):
         self.holding = name
         # print("Picking ",name)
         self.dm.pick_object(self.places[2], "right")
+        time.sleep(5)
+
 
     def put_in_box(self, name):
         self.holding = None
         # print("Putting ",name)
-        pos = self.places[np.random.randint(len(self.places))]
+        pos = self.places.pop()
         self.dm.place_object(pos, "right")
         self.items.remove(a)
+        time.sleep(5)
+
 
     def put_in_clutter(self, name):
         self.holding = None
         # print("Putting ",name)
         self.dm.place_object(self.obs["sponge"], "right")
+        time.sleep(5)
+
 
