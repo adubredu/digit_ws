@@ -158,6 +158,56 @@ class Digit_Control:
         # self.move_gripper_to_conf(confs, armname) 
 
 
+    def move_arm_to_pose(self, pose, armname, dur, bimanual=False, prevarmname=None, prevarmpose=None):
+        if not bimanual:
+            self.move_ee_to_pose(pose, armname, dur)
+
+        else:
+            self.move_bimanual_motion(pose, armname, dur, prevarmname, prevarmpose)
+
+
+    def move_bimanual_motion(self, pose, armname, dur, prevarmname, prevarmpose):
+        carm = self.armname[armname]
+        parm = self.armname[prevarmname]
+        msg = ["action-concurrent",
+                {
+                    "actions": [
+                        ["action-end-effector-move",
+                              {
+                                "end-effector": parm,
+                                "waypoints": [
+                                              {"rpyxyz":[0.3,0.8128,0.1109,prevarmpose[0], prevarmpose[1], prevarmpose[2]]},
+                                              {"rpyxyz":[0.3,0.8128,0.1109,prevarmpose[0], prevarmpose[1], prevarmpose[2]]}],
+                                "reference-frame": {
+                                  "robot-frame": "base"
+                                },
+                                "stall-threshold": None,
+                                "cyclic": False,
+                                "max-speed": 0.5,
+                                "duration": dur,
+                                "transition-duration": None
+                              }, 0],
+                        ["action-end-effector-move",
+                            {
+                                "end-effector": carm,
+                                "waypoints": [
+                                              {"rpyxyz":[0.3,0.8128,0.1109,pose[0], pose[1], pose[2]]},
+                                              {"rpyxyz":[0.3,0.8128,0.1109,pose[0], pose[1], pose[2]]}],
+                                "reference-frame": {
+                                  "robot-frame": "base"
+                                },
+                                "stall-threshold": None,
+                                "cyclic": False,
+                                "max-speed": 0.5,
+                                "duration": dur,
+                                "transition-duration": None
+                              }, 0]  
+                    ]
+                }
+        ]
+        self.client.send(json.dumps(msg))
+
+
     def compute_gripper_confs(self, pose):
         pass
 

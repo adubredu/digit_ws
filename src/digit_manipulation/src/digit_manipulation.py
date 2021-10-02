@@ -9,22 +9,24 @@ class Digit_Manipulation:
         self.dc = dc
         self.dt = 3
         self.none = 999
+        self.right_pour_conf = [100, self.none]
         self.confs={'right':{'yaw_flat':150,'pitch_up':90, 'pitch_down':270, 'pitch_horizontal':180},
                     'left':{'yaw_flat':150,'pitch_up':60, 'pitch_down':240, 'pitch_horizontal':150}}
         self.init_pose = {'right':[0.2, -0.25, 0.15],
                           'left':[0.2, 0.25, 0.15]}
+
     def pick_object(self, poses, armname): 
         self.dc.open_gripper(armname=armname)
         time.sleep(self.dt) 
          
         p = [0.2,-0.25,0.15]
-        self.dc.move_ee_to_pose(p, armname = armname, dur=5)
+        self.dc.move_arm_to_pose(p, armname = armname, dur=5)
         time.sleep(self.dt)
 
         pose = poses[:-1]
         prepose = copy.deepcopy(pose)
         prepose[2]+=0.075 
-        self.dc.move_ee_to_pose(prepose, armname =armname, dur=2.5)
+        self.dc.move_arm_to_pose(prepose, armname =armname, dur=2.5)
         time.sleep(self.dt)
         print('At prepose ',prepose)
 
@@ -32,31 +34,31 @@ class Digit_Manipulation:
         self.dc.move_gripper_to_conf(confs, 'right')
         time.sleep(self.dt)
 
-        self.dc.move_ee_to_pose(pose, armname = armname, dur=2.5)
+        self.dc.move_arm_to_pose(pose, armname = armname, dur=2.5)
         time.sleep(self.dt)
         print('At pose ',pose)
 
         self.dc.close_gripper(armname=armname)
         time.sleep(self.dt+5)
 
-        self.dc.move_ee_to_pose(prepose, armname = armname, dur=2.5)
+        self.dc.move_arm_to_pose(prepose, armname = armname, dur=2.5)
         time.sleep(self.dt)
 
         p = [0.2,-0.25,0.15] 
-        self.dc.move_ee_to_pose(p, armname = armname, dur=5)
+        self.dc.move_arm_to_pose(p, armname = armname, dur=5)
         time.sleep(self.dt)
  
 
 
     def place_object(self, poses, armname):
         p = [0.2,-0.25,0.4]
-        self.dc.move_ee_to_pose(p, armname = armname, dur=5)
+        self.dc.move_arm_to_pose(p, armname = armname, dur=5)
         time.sleep(self.dt)
 
         pose = poses[:-1]
         prepose = copy.deepcopy(pose)
         prepose[2]+=0.15
-        self.dc.move_ee_to_pose(prepose, armname =armname, dur=7)
+        self.dc.move_arm_to_pose(prepose, armname =armname, dur=7)
         time.sleep(self.dt+5)
         print('At prepose ',prepose)
 
@@ -64,18 +66,18 @@ class Digit_Manipulation:
         self.dc.move_gripper_to_conf(confs, 'right')
         time.sleep(self.dt)
 
-        self.dc.move_ee_to_pose(pose, armname = armname, dur=2.5)
+        self.dc.move_arm_to_pose(pose, armname = armname, dur=2.5)
         time.sleep(self.dt)
         print('At pose ',pose)
 
         self.dc.open_gripper(armname=armname)
         time.sleep(self.dt+5)
 
-        self.dc.move_ee_to_pose(prepose, armname = armname, dur=2.5)
+        self.dc.move_arm_to_pose(prepose, armname = armname, dur=2.5)
         time.sleep(self.dt)
 
         p = [0.2,-0.25,0.15] 
-        self.dc.move_ee_to_pose(p, armname = armname, dur=7)
+        self.dc.move_arm_to_pose(p, armname = armname, dur=7)
         time.sleep(self.dt)
 
         confs = [self.none, 270]
@@ -89,7 +91,7 @@ class Digit_Manipulation:
             p = [0.2,-0.25,0.15]
         else:
             p = [0.2, 0.25, 0.15]
-        self.dc.move_ee_to_pose(p, armname = armname, dur=5)
+        self.dc.move_arm_to_pose(p, armname = armname, dur=5)
         time.sleep(self.dt) 
 
 
@@ -200,7 +202,7 @@ class Digit_Manipulation:
         time.sleep(dt) 
 
 
-    def side_pick_right(self, pose, armname):
+    def side_pick_right(self, pose, armname, bimanual=False, prevarmname=None, prevarmpose=None):
         # self.dc.close_gripper(armname=armname)
         # time.sleep(self.dt)
 
@@ -208,7 +210,7 @@ class Digit_Manipulation:
         time.sleep(self.dt)  
 
         p = self.init_pose[armname]
-        self.dc.move_ee_to_pose(p, armname = armname, dur=5)
+        self.dc.move_arm_to_pose(p, armname, 5, bimanual, prevarmname, prevarmpose)
         time.sleep(self.dt)
 
         self.dc.move_gripper_to_conf([self.confs[armname]['yaw_flat'], self.confs[armname]['pitch_horizontal']], armname)
@@ -218,57 +220,81 @@ class Digit_Manipulation:
         prepose = copy.deepcopy(pose)
         # prepose[0]-=0.17
         prepose[2]+=0.1
-        self.dc.move_ee_to_pose(prepose, armname = armname, dur=5)
+        self.dc.move_arm_to_pose(prepose, armname, 5, bimanual, prevarmname, prevarmpose)
         time.sleep(self.dt)
 
         self.dc.move_gripper_to_conf([130, self.none], armname)
         time.sleep(self.dt)
 
         # p = [0.37,-0.095, -0.01]
-        self.dc.move_ee_to_pose(pose, armname = armname, dur=5)
+        self.dc.move_arm_to_pose(pose, armname, 5, bimanual, prevarmname, prevarmpose)
         time.sleep(self.dt*2)
 
 
         #going back
         # p = [0.2,-0.25,0.15]
-        # self.dc.move_ee_to_pose(p, armname = armname, dur=5)
+        # self.dc.move_arm_to_pose(p, armname = armname, dur=5)
         # time.sleep(self.dt) 
         # self.dc.move_gripper_to_conf([150, 270], 'right')
         # time.sleep(self.dt)
 
+        return pose
 
-    def raise_up(self, pose, armname):
+
+    def raise_up(self, pose, armname, bimanual=False, prevarmname=None, prevarmpose=None):
         self.dc.close_gripper(armname=armname)
         time.sleep(self.dt)
 
         p = copy.deepcopy(pose)
-        p[2]+=0.1
-        self.dc.move_ee_to_pose(p, armname = armname, dur=5)
+        if armname == 'right':
+            p[2]+=0.13
+        else: 
+            p[0]-= 0.04
+            p[1]-=0.05
+            p[2]+=0.1
+        self.dc.move_arm_to_pose(p, armname, 5, bimanual, prevarmname, prevarmpose)
         time.sleep(self.dt*4)
 
         #put down
         # p = copy.deepcopy(pose)
-        p[2]-=0.1
-        self.dc.move_ee_to_pose(p, armname = armname, dur=5)
+        # p[2]-=0.1
+        # self.dc.move_arm_to_pose(p, armname, 5, bimanual, prevarmname, prevarmpose)
+        # time.sleep(self.dt*1.5)
+
+        # self.dc.open_gripper(armname=armname)
+        # time.sleep(self.dt)
+
+        #going back 
+        # p = self.init_pose[armname] 
+        # self.dc.move_arm_to_pose(p, armname, 5, bimanual, prevarmname, prevarmpose)
+        # time.sleep(self.dt) 
+        # self.dc.move_gripper_to_conf([self.confs[armname]['yaw_flat'], 
+        #                 self.confs[armname]['pitch_down']], armname)
+        # time.sleep(self.dt)
+
+        return p
+
+    def put_down(self, pose, armname, bimanual=False, prevarmname=None, prevarmpose=None):
+        self.dc.close_gripper(armname=armname)
+        time.sleep(self.dt)
+
+        p = copy.deepcopy(pose)
+        # p[2]-=0.1
+        self.dc.move_arm_to_pose(p, armname, 5, bimanual, prevarmname, prevarmpose)
         time.sleep(self.dt*1.5)
 
         self.dc.open_gripper(armname=armname)
         time.sleep(self.dt)
 
-        #going back 
-        p = self.init_pose[armname] 
-        self.dc.move_ee_to_pose(p, armname = armname, dur=5)
-        time.sleep(self.dt) 
-        self.dc.move_gripper_to_conf([self.confs[armname]['yaw_flat'], 
-                        self.confs[armname]['pitch_down']], armname)
-        time.sleep(self.dt)
+        return p
 
 
-    def side_pick_left(self, pose, armname='left'):
+
+    def side_pick_left(self, pose, armname='left', bimanual=False, prevarmname=None, prevarmpose=None):
         self.dc.open_gripper(armname=armname)
         time.sleep(self.dt) 
         p = self.init_pose[armname]
-        self.dc.move_ee_to_pose(p, armname=armname, dur=5)
+        self.dc.move_arm_to_pose(p, armname, 5, bimanual, prevarmname, prevarmpose)
         time.sleep(self.dt)
 
 
@@ -277,30 +303,36 @@ class Digit_Manipulation:
         time.sleep(self.dt)
 
         prepose = copy.deepcopy(pose)
-        prepose[0]-=0.17
-        # prepose[2]+=0.08
-        self.dc.move_ee_to_pose(prepose, armname = armname, dur=5)
+        prepose[0]-=0.17 
+        self.dc.move_arm_to_pose(prepose, armname, 5, bimanual, prevarmname, prevarmpose)
         time.sleep(self.dt*3)
-
-        # self.dc.move_gripper_to_conf([170, self.none], armname)
-        # time.sleep(self.dt)
-        self.dc.move_ee_to_pose(pose, armname = armname, dur=5)
+ 
+        self.dc.move_arm_to_pose(pose, armname, 5, bimanual, prevarmname, prevarmpose)
         time.sleep(self.dt*2)
 
         prepose = copy.deepcopy(pose)
         # prepose[0]-=0.17
         prepose[0]+=0.018
-        self.dc.move_ee_to_pose(prepose, armname = armname, dur=5)
+        self.dc.move_arm_to_pose(prepose, armname, 5, bimanual, prevarmname, prevarmpose)
         time.sleep(self.dt*3)
 
         #going back
         # p = [0.2, 0.25,0.15]
-        # self.dc.move_ee_to_pose(p, armname = armname, dur=5)
+        # self.dc.move_arm_to_pose(p, armname = armname, dur=5)
         # time.sleep(self.dt) 
         # self.dc.move_gripper_to_conf([self.confs[armname]['yaw_flat'], 
         #                         self.confs[armname]['pitch_down']], armname)
         # time.sleep(self.dt)
 
+        return prepose
+
+    def move_to_init(self, armname, bimanual=False, prevarmname=None, prevarmpose=None):
+        p = self.init_pose[armname] 
+        self.dc.move_arm_to_pose(p, armname, 5, bimanual, prevarmname, prevarmpose)
+        time.sleep(self.dt) 
+        self.dc.move_gripper_to_conf([self.confs[armname]['yaw_flat'], 
+                        self.confs[armname]['pitch_down']], armname)
+        time.sleep(self.dt)
 
 
 
@@ -369,9 +401,18 @@ if __name__ == '__main__':
     repick1 = [0.4,0.1,0.04, 150]  
 
     # dm.hello_demo()
-    # dm.dc.close_gripper('right')
-    # time.sleep(5)
-    # dm.dc.open_gripper('right')
+    dm.dc.close_gripper('right')
+    time.sleep(5)
+    dm.dc.open_gripper('right')
+    time.sleep(5)
+    dm.dc.close_gripper('left')
+    time.sleep(5)
+    dm.dc.open_gripper('left')
+    confs=[100, dm.none]
+    dm.dc.move_gripper_to_conf(confs, 'right')
+    time.sleep(5)
+    confs=[150, dm.none]
+    dm.dc.move_gripper_to_conf(confs, 'right')
     # dm.pack_groceries()
     # dm.side_pick([0.37,-0.095, -0.01],'right')
     # dm.side_pick_left([0.37,0.128, -0.02], armname='left')

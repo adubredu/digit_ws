@@ -12,8 +12,9 @@ from apriltag_ros.msg import AprilTagDetectionArray
 from digit_manipulation import Digit_Manipulation
 
 class Grasp_Fiducial:
-	def __init__(self):
+	def __init__(self,dm):
 		# rospy.init_node("grasp_fiducial")
+		self.dm = dm
 		self.tag_poses={} 
 		self.bottle_grasp_pose = [0.37,-0.095, -0.01]
 		self.glass_grasp_pose = [0.37, 0.128, -0.02]
@@ -74,9 +75,39 @@ class Grasp_Fiducial:
 				print(bot_pose)
 				return bot_pose
 		else:
-			print("no fiducial detected")
+			print("NO FIDUCIAL DETECTED!")
 			return None
 
+	def drink_pouring_demo(self):
+		print('picking bottle')
+		bottle_grasp_pose = self.get_grasp_pose('bottle')
+		self.dm.side_pick_right(bottle_grasp_pose,'right')
+		prev_pose = self.dm.raise_up(bottle_grasp_pose,'right')
+		time.sleep(5)
+
+		print('picking glass')
+		glass_grasp_pose = self.get_grasp_pose('glass')
+		self.dm.side_pick_left(glass_grasp_pose, 'left', bimanual=True, prevarmname='right', prevarmpose=prev_pose)
+		prev_pose = self.dm.raise_up(glass_grasp_pose, 'left', bimanual=True, prevarmname='right', prevarmpose=prev_pose)
+		time.sleep(5)
+		
+		self.dm.dc.move_gripper_to_conf([60, self.dm.none], 'right')
+		time.sleep(10)
+		self.dm.dc.move_gripper_to_conf([130, self.dm.none], 'right')
+		time.sleep(5)
+
+		print('putting obs down')
+		prev_pose = self.dm.put_down(bottle_grasp_pose, 'right', bimanual=True, prevarmname='left', prevarmpose=prev_pose )
+		time.sleep(5)
+		prev_pose = self.dm.put_down(glass_grasp_pose, 'left', bimanual=True, prevarmname='right', prevarmpose=prev_pose )
+		time.sleep(5)
+
+
+		print('Going home...')
+		self.dm.move_to_init('right', bimanual=True, prevarmname='left', prevarmpose=prev_pose)
+		time.sleep(5)
+		self.dm.move_to_init('left')
+		
 
 
 
@@ -84,17 +115,8 @@ class Grasp_Fiducial:
 
 
 
-if __name__ == "__main__":
-	gf = Grasp_Fiducial()
-	time.sleep(5)
-	# gf.print_transformed_fids()
-	# print(gf.get_bottle_grasp_pose())
-	# for i in range(5):
-	# 	gf.print_fids()
-	# 	time.sleep(1)
-	# 	print(' \n###')
-	
 
+if __name__ == "__main__":   
 
 	ws = BasicClient('ws://10.10.2.1:8080', protocols=['json-v1-agility'])
 	# ws = BasicClient('ws://127.0.0.1:8080', protocols=['json-v1-agility'])
@@ -112,14 +134,8 @@ if __name__ == "__main__":
 
 	dc = Digit_Control(ws)
 	dm = Digit_Manipulation(dc)
-	# gf.print_transformed_fids()
-	bottle_grasp_pose = gf.get_grasp_pose('bottle')
-	dm.side_pick_right(bottle_grasp_pose,'right')
-	dm.raise_up(bottle_grasp_pose,'right')
-	time.sleep(5)
-
-	glass_grasp_pose = gf.get_grasp_pose('glass')
-	dm.side_pick_left(glass_grasp_pose, 'left')
-	dm.raise_up(glass_grasp_pose, 'left')
-
+	gf = Grasp_Fiducial(dm)
+	time.sleep(10) #to allow for fiducial detection
+	# gf.print_transformed_fids() 
+	gf.drink_pouring_demo()
 	rospy.spin()
